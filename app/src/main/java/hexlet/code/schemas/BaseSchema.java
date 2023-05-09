@@ -1,5 +1,5 @@
 package hexlet.code.schemas;
 
-public interface Schema {
+public interface BaseSchema {
     boolean isValid(Object object);
 }
