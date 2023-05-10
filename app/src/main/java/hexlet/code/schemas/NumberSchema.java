@@ -1,46 +1,24 @@
 package hexlet.code.schemas;
 
-public final class NumberSchema implements BaseSchema {
-    private boolean required;
-    private boolean positive;
-    private int min;
-    private int max;
+import java.util.Objects;
+import java.util.function.Predicate;
 
+public final class NumberSchema extends BaseSchema {
     public NumberSchema() {
-        this.required = false;
-        this.positive = false;
-        this.min = Integer.MIN_VALUE;
-        this.max = Integer.MAX_VALUE;
+        predicateList.add(x -> x instanceof Integer || x == null);
     }
     public NumberSchema required() {
-        required = true;
+        predicateList.add(Objects::nonNull);
         return this;
     }
     public NumberSchema positive() {
-        positive = true;
+        Predicate<Integer> predicate = x -> x == null || x > 0;
+        predicateList.add(predicate);
         return this;
     }
     public NumberSchema range(int minRange, int maxRange) {
-        this.min = minRange;
-        this.max = maxRange;
+        Predicate<Integer> predicate = x -> x >= minRange && x <= maxRange;
+        predicateList.add(predicate);
         return this;
-    }
-    @Override
-    public boolean isValid(Object object) {
-        if (object == null) {
-            return !required;
-        }
-
-        if (object.getClass() != Integer.class) {
-            return false;
-        }
-
-        var num = (int) object;
-
-        if (positive && num <= 0) {
-            return false;
-        }
-
-        return num >= min && num <= max;
     }
 }

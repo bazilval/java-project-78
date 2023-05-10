@@ -1,65 +1,49 @@
 package hexlet.code.schemas;
 
 import java.util.Map;
+import java.util.Objects;
+import java.util.function.Predicate;
 
-public final class MapSchema implements BaseSchema {
-    private boolean required;
-    private Integer requiredSize;
+public final class MapSchema extends BaseSchema {
     private Map<String, BaseSchema> shape;
 
     public MapSchema() {
-        this.required = false;
-        this.requiredSize = null;
+        predicateList.add(x -> x instanceof Map<?, ?> || x == null);
         this.shape = null;
     }
-
     public MapSchema required() {
-        required = true;
+        predicateList.add(Objects::nonNull);
         return this;
     }
-
     public MapSchema sizeof(int size) {
-        requiredSize = size;
+        Predicate<Map> predicate = x -> x.size() == size;
+        predicateList.add(predicate);
         return this;
     }
-
     public MapSchema shape(Map<String, BaseSchema> schemas) {
         shape = schemas;
         return this;
     }
-
     @Override
     public boolean isValid(Object object) {
-        if (object == null) {
-            return !required;
-        }
-
-        if (!(object instanceof Map<?, ?>)) {
-            return false;
-        }
-
-        var map = (Map<?, ?>) object;
-
-        if (requiredSize != null && map.size() != requiredSize) {
-            return false;
-        }
-
+        var shapeResult = true;
         if (shape != null) {
             var entrySet = shape.entrySet();
+            var map = (Map) object;
             for (var entry : entrySet) {
                 try {
                     String key = (String) entry.getKey();
                     BaseSchema schema = (BaseSchema) entry.getValue();
 
                     if (!schema.isValid(map.get(key))) {
-                        return false;
+                        shapeResult = false;
                     }
                 } catch (Exception e) {
-                    return false;
+                    shapeResult = false;
                 }
             }
         }
 
-        return true;
+        return super.isValid(object) && shapeResult;
     }
 }
