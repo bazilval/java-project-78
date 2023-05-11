@@ -5,12 +5,10 @@ import java.util.Objects;
 import java.util.function.Predicate;
 
 public final class MapSchema extends BaseSchema {
-    private Map<String, BaseSchema> shape;
-
     public MapSchema() {
         predicateList.add(x -> x instanceof Map<?, ?> || x == null);
-        this.shape = null;
     }
+
     public MapSchema required() {
         predicateList.add(Objects::nonNull);
         return this;
@@ -21,29 +19,35 @@ public final class MapSchema extends BaseSchema {
         return this;
     }
     public MapSchema shape(Map<String, BaseSchema> schemas) {
-        shape = schemas;
+        if (schemas != null) {
+            var predicat = new ShapePredicate(schemas);
+            predicateList.add(predicat);
+        }
         return this;
     }
-    @Override
-    public boolean isValid(Object object) {
-        var shapeResult = true;
-        if (shape != null) {
-            var entrySet = shape.entrySet();
-            var map = (Map) object;
+    private final class ShapePredicate implements Predicate<Map> {
+        private final Map<String, BaseSchema> schemas;
+
+        ShapePredicate(Map<String, BaseSchema> shape) {
+            this.schemas = shape;
+        }
+        @Override
+        public boolean test(Map map) {
+            var entrySet = schemas.entrySet();
             for (var entry : entrySet) {
                 try {
                     String key = (String) entry.getKey();
+                    Object value = map.get(key);
                     BaseSchema schema = (BaseSchema) entry.getValue();
 
-                    if (!schema.isValid(map.get(key))) {
-                        shapeResult = false;
+                    if (!schema.isValid(value)) {
+                        return false;
                     }
                 } catch (Exception e) {
-                    shapeResult = false;
+                    return false;
                 }
             }
+            return true;
         }
-
-        return super.isValid(object) && shapeResult;
     }
 }
