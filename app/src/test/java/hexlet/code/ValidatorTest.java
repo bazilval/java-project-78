@@ -97,6 +97,11 @@ public class ValidatorTest {
         data.put("name", "Valya");
         data.put("age", -5);
         assertFalse(schema.isValid(data));
+
+        schema.shape(null);
+
+        data.put("age", null);
+        assertTrue(schema.isValid(data));
     }
 
 }
